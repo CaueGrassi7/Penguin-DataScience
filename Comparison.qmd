@@ -1,0 +1,106 @@
+---
+title: "Comparison of Classification Methods: KNN vs. Decision Rules"
+author: "Cauê Grassi"
+format:
+  html: 
+    self-contained: true
+---
+## Objetivos
+
+Comparar a eficiência dos métodos de comparação KNN vs Regras de Decisão
+
+
+## Lendo o conjunto
+
+Será usado a biblioteca `palmerpenguins`
+```{r}
+library(palmerpenguins)
+penguinsData <- penguins
+```
+
+
+## Análise da estrutura dos dados
+```{r}
+str(penguinsData)
+```
+
+
+## Resumo Estatístico dos dados
+```{r}
+summary(penguinsData)
+```
+
+## Tratamento dos dados para remover os valores faltantes
+```{r}
+penguinsData <- na.omit(penguinsData)
+```
+
+## Dados Tratados
+```{r}
+summary(penguinsData)
+```
+
+## Divisão entre teste e treino dos dados e embaralhamento
+```{r}
+penguinsData <- penguinsData[sample(nrow(penguinsData)), ]
+
+n <- round(0.8 * nrow(penguinsData))
+
+treino <- penguinsData[1:n,]
+teste <- penguinsData[-(1:n),]
+```
+
+## Gráfico de pontos comparando peso e tamanho do bico por espécies
+```{r}
+library(ggplot2)
+ggplot(data = treino, mapping = aes(x = body_mass_g, y = flipper_length_mm, colour = species))+
+  geom_point(alpha = 2)+
+  theme_minimal()
+```
+
+## 1- Regras de Decisões
+```{r}
+pred_rules <- c()
+for (j in 1:nrow(teste)) {
+  if (teste$body_mass_g[j] < 3700) {
+    pred_rules[j] <- "Adelie"
+  } else if (teste$flipper_length_mm[j] < 200) {
+    pred_rules[j] <- "Chinstrap"
+  } else {
+    pred_rules[j] <- "Gentoo"
+  }
+}
+```
+
+### Cálculo da acurácia das regras de decisões
+```{r}
+acc_rules <- mean(pred_rules == teste$species)
+print(paste("Acurácia das Regras de Decisão: ", round(acc_rules * 100, 2), "%"))
+```
+## 2- K-Nearest Neightbors (KNN)
+```{r}
+if (!requireNamespace("class", quietly = TRUE)) {
+  install.packages("class")
+}
+
+library(class)
+
+train_data <- treino[, c("body_mass_g", "bill_length_mm", "flipper_length_mm")]
+test_data <- teste[, c("body_mass_g", "bill_length_mm", "flipper_length_mm")]
+
+train_labels <- treino$species
+
+k <- 3
+
+pred_knn <- knn(train = train_data, test = test_data, cl = train_labels, k = k)
+
+acc_knn <- mean(pred_knn == teste$species)
+print(paste("Acurácia do KNN: ", round(acc_knn * 100, 2), "%"))
+```
+## Conclusão
+```{r}
+print(paste("Acurácia das Regras de Decisão: ", round(acc_rules * 100, 2), "%"))
+
+print(paste("Acurácia do KNN: ", round(acc_knn * 100, 2), "%"))
+```
+Após comparar os métodos de classificação KNN e Regras de Decisão usando o conjunto de dados `palmerpenguins`, observamos que o KNN apresentou maior acurácia devido à sua capacidade de considerar múltiplas variáveis para prever a espécie dos pinguins. No entanto, as Regras de Decisão, apesar de serem menos precisas, oferecem uma abordagem mais simples e interpretável. A escolha do método ideal depende do equilíbrio desejado entre precisão e interpretabilidade no contexto da aplicação.
